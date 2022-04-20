@@ -82,43 +82,46 @@ async def cmd_alert_time(message: types.Message, state: FSMContext):
 async def cmd_alert(message: types.Message, state: FSMContext):
     if await is_user_auth(message.from_user.id):
         result = f'<b>Изменение цен монет за последние {MAX_DELTA_STATS} часов:</b>\n\n'
-        for top_number in range(1, 11):
-            stat_list = await commands.select_coin(top_number)
+        try:
+            for top_number in range(1, 11):
+                stat_list = await commands.select_coin(top_number)
 
-            coins = {}
-            for line in stat_list:
-                if line[3] in coins.keys():
-                    coins[line[3]] += 1
+                coins = {}
+                for line in stat_list:
+                    if line[3] in coins.keys():
+                        coins[line[3]] += 1
+                    else:
+                        coins[line[3]] = 1
+
+                max_coin = 0
+                max_coin_name = ''
+                for key, value in coins.items():
+                    if value > max_coin:
+                        max_coin = value
+                        max_coin_name = key
+
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(hours=MAX_DELTA_STATS)
+                stat_list_filtered = list(filter(lambda x: x[3] == max_coin_name and
+                                                           now - datetime.datetime.strptime(x[4], '%Y-%m-%d %H:%M') <= delta,
+                                                 stat_list))
+                stat_list_sorted_id = sorted(stat_list_filtered, key=lambda x: x[0])
+
+                end_cost = float(stat_list_sorted_id[-1][5])
+                result_cost_list = list(map(lambda x: float(x[5]), stat_list_sorted_id[:-1]))
+
+                average_cost = sum(result_cost_list) / len(result_cost_list)
+
+                if end_cost < average_cost:
+                    result += f'<b>{top_number}</b>: {max_coin_name} ⏬\n'
+                elif end_cost > average_cost:
+                    result += f'<b>{top_number}</b>: {max_coin_name} ⏫\n'
                 else:
-                    coins[line[3]] = 1
+                    result += f'<b>{top_number}</b>: {max_coin_name} ↔️\n'
 
-            max_coin = 0
-            max_coin_name = ''
-            for key, value in coins.items():
-                if value > max_coin:
-                    max_coin = value
-                    max_coin_name = key
-
-            now = datetime.datetime.now()
-            delta = datetime.timedelta(hours=MAX_DELTA_STATS)
-            stat_list_filtered = list(filter(lambda x: x[3] == max_coin_name and
-                                                       now - datetime.datetime.strptime(x[4], '%Y-%m-%d %H:%M') <= delta,
-                                             stat_list))
-            stat_list_sorted_id = sorted(stat_list_filtered, key=lambda x: x[0])
-
-            end_cost = float(stat_list_sorted_id[-1][5])
-            result_cost_list = list(map(lambda x: float(x[5]), stat_list_sorted_id[:-1]))
-            average_cost = sum(result_cost_list) / len(result_cost_list)
-
-            if end_cost < average_cost:
-                result += f'<b>{top_number}</b>: {max_coin_name} ⏬\n'
-            elif end_cost > average_cost:
-                result += f'<b>{top_number}</b>: {max_coin_name} ⏫\n'
-            else:
-                result += f'<b>{top_number}</b>: {max_coin_name} ↔️\n'
-
-        await message.answer(result, parse_mode='HTML')
-
+            await message.answer(result, parse_mode='HTML')
+        except ZeroDivisionError:
+            await message.answer('Данных пока нет. Повторите попытку позже.')
 
 @dp.message_handler()
 async def all_msg(message: types.Message):
