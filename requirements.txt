@@ -1,0 +1,6 @@
+python-dotenv
+aiogram
+aiosqlite
+loguru
+beautifulsoup4
+requests

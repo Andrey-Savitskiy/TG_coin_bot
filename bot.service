@@ -1,0 +1,15 @@
+[Unit]
+Description=Coin Bot
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bot/
+ExecStart=/usr/bin/python3 /opt/bot/main.py
+RestartSec=2
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
