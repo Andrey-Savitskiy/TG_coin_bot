@@ -10,13 +10,14 @@ from handlers.parser import coin_parser
 from utils.log_settings import InterceptHandler
 
 
-if __name__ == '__main__':
+def main():
     logging.basicConfig(handlers=[InterceptHandler()], level='WARNING')
     try:
-        loop = asyncio.get_event_loop()
-        loop.create_task(check_alerts())
-        loop.create_task(coin_parser())
-        executor = Executor(dp, skip_updates=True)
+        executor = Executor(dp, skip_updates=True, loop=asyncio.gather(check_alerts(), coin_parser()))
         executor.start_polling()
     except Exception as error:
         logger.exception(error)
+
+
+if __name__ == '__main__':
+    main()

@@ -13,6 +13,7 @@ async def check_alerts():
             now = datetime.datetime.now()
 
             for alert in alerts_list:
+                print(alert)
                 alert_time = datetime.datetime.strptime(alert[2], '%Y-%m-%d %H:%M')
                 if alert_time <= now:
                     try:
