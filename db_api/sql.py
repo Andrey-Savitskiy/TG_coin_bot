@@ -31,6 +31,17 @@ class SQLCommands:
         await db.close()
 
 
+    async def update(self, table: str, values: str, password: str):
+        result_values = [f'"{item}"' if isinstance(item, str) else str(item) for item in values]
+        sql = f"""
+        UPDATE {table} SET {values} WHERE password = '{password}';
+        """
+        db = await aiosqlite.connect('sqlite.db')
+        await db.execute(sql)
+        await db.commit()
+        await db.close()
+
+
     async def remove(self, table: str, id: int):
         sql = f"""
         DELETE FROM {table} WHERE id = {id}
@@ -42,7 +53,13 @@ class SQLCommands:
 
     async def select_coin(self, top: int):
         sql = f"""
-        SELECT * FROM coins_data WHERE top = {top}
+        SELECT * FROM coins_data WHERE top = {top} ORDER BY id DESC LIMIT 1
+        """
+        return await self._fetchone(sql)
+
+    async def select_coins_by_name(self, name: str, last_coin_id: int):
+        sql = f"""
+        SELECT * FROM coins_data WHERE coin_name = '{name}' and id != {last_coin_id}
         """
         return await self._fetchall(sql)
 
@@ -54,7 +71,7 @@ class SQLCommands:
 
     async def select_password(self, password: str):
         sql = f"""
-        SELECT id FROM user WHERE password = {password}
+        SELECT * FROM user WHERE password = {password}
         """
         return await self._fetchone(sql)
 
